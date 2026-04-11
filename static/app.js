@@ -251,7 +251,7 @@ function shoppingList() {
             percentage: window.initialStats?.percentage || 0
         },
 
-        // Current item for mobile actions
+        // Current item for mobile actions (sheet). History: pushState on open so Android back closes sheet.
         mobileActionItem: null,
 
         // Edit item
@@ -327,6 +327,13 @@ function shoppingList() {
             this.$el.addEventListener('open-mobile-action', (e) => {
                 this.openMobileAction(e.detail);
             });
+
+            this._popStateMobileAction = () => {
+                if (this.mobileActionItem) {
+                    this.mobileActionItem = null;
+                }
+            };
+            window.addEventListener('popstate', this._popStateMobileAction);
 
             // Keyboard shortcut for save (Cmd+Enter)
             document.addEventListener('keydown', (e) => {
@@ -1414,10 +1421,16 @@ function shoppingList() {
                 uncertain: item.uncertain,
                 quantity: item.quantity || 0
             };
+            history.pushState({ koffanMobileItemAction: true }, '');
         },
 
-        closeMobileAction() {
-            this.mobileActionItem = null;
+        dismissMobileActionSheet() {
+            if (!this.mobileActionItem) return;
+            if (window.history.state && window.history.state.koffanMobileItemAction) {
+                window.history.back();
+            } else {
+                this.mobileActionItem = null;
+            }
         },
 
         async toggleUncertain() {
@@ -1430,7 +1443,7 @@ function shoppingList() {
 
             // Optimistic UI update for modal
             this.mobileActionItem.uncertain = !this.mobileActionItem.uncertain;
-            this.mobileActionItem = null;
+            this.dismissMobileActionSheet();
 
             if (!this.isOnline) {
                 // Queue for offline sync
@@ -1654,12 +1667,12 @@ function shoppingList() {
             if (!this.mobileActionItem) return;
             if (!this.isOnline) {
                 window.Toast.show(t('offline.action_blocked'), 'warning');
-                this.mobileActionItem = null;
+                this.dismissMobileActionSheet();
                 return;
             }
             const itemId = this.mobileActionItem.id;
             const fromSectionId = this.mobileActionItem.section_id;
-            this.mobileActionItem = null;
+            this.dismissMobileActionSheet();
             this.markLocalAction('item_moved');
 
             try {
@@ -1686,7 +1699,7 @@ function shoppingList() {
             if (!this.mobileActionItem) return;
             if (!this.isOnline) {
                 window.Toast.show(t('offline.action_blocked'), 'warning');
-                this.mobileActionItem = null;
+                this.dismissMobileActionSheet();
                 return;
             }
             const confirmed = confirm(t('confirm.delete_item', { name: this.mobileActionItem.name }));
@@ -1694,7 +1707,7 @@ function shoppingList() {
 
             const itemId = this.mobileActionItem.id;
             const sectionId = this.mobileActionItem.section_id;
-            this.mobileActionItem = null;
+            this.dismissMobileActionSheet();
 
             await this.deleteItemDirect(itemId, sectionId);
         },

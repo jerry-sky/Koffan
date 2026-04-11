@@ -437,12 +437,12 @@
 
     <!-- Mobile Action Modal -->
     <div x-show="mobileActionItem" x-cloak class="fixed inset-0 z-50 flex items-end justify-center md:hidden">
-        <div class="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" @click="mobileActionItem = null"></div>
+        <div class="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" @click="dismissMobileActionSheet()"></div>
         <div class="relative bg-white dark:bg-stone-800 rounded-t-2xl w-full p-6">
             <div class="w-10 h-1 bg-stone-200 dark:bg-stone-600 rounded-full mx-auto mb-4"></div>
             <h3 class="font-medium text-stone-800 dark:text-stone-100 mb-4 truncate" x-text="mobileActionItem?.name"></h3>
             <div class="space-y-2">
-                <button @click="editItem(mobileActionItem); mobileActionItem = null"
+                <button @click="editItem(mobileActionItem); dismissMobileActionSheet()"
                     class="w-full flex items-center gap-3 p-3 rounded-xl bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
