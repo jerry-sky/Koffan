@@ -7,21 +7,6 @@
     x-show="isItemVisible({{.Item.ID}})"
     @click="if($data.inlineEditingItemId !== {{.Item.ID}} && !$event.target.closest('button, a, input, select')) { $data.startInlineEdit({{.Item.ID}}, {{.Item.SectionID}}, '{{.Item.Name | js}}', '{{.Item.Description | js}}', {{.Item.Quantity}}) }"
 >
-    <!-- Drag Handle - keep visible but transparent during edit to maintain spacing -->
-    <div 
-        class="drag-handle flex-shrink-0 w-5 h-10 flex items-center justify-center -ml-2 touch-none cursor-grab active:cursor-grabbing text-stone-300 dark:text-stone-600 hover:text-stone-400 dark:hover:text-stone-500 transition-colors"
-        :class="$data.inlineEditingItemId === {{.Item.ID}} && 'opacity-0 pointer-events-none'"
-    >
-        <svg class="w-4 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <circle cx="9" cy="5" r="1.5"/>
-            <circle cx="15" cy="5" r="1.5"/>
-            <circle cx="9" cy="12" r="1.5"/>
-            <circle cx="15" cy="12" r="1.5"/>
-            <circle cx="9" cy="19" r="1.5"/>
-            <circle cx="15" cy="19" r="1.5"/>
-        </svg>
-    </div>
-
     <!-- Checkbox -->
     <button
         @click="$data.toggleItem({{.Item.ID}}, {{.Item.SectionID}})"
@@ -32,7 +17,7 @@
 
     <!-- Content (clickable to edit) -->
     <div
-        class="flex-1 min-w-0 ml-3"
+        class="flex-1 min-w-0 ml-2"
         x-show="$data.inlineEditingItemId !== {{.Item.ID}}"
     >
         <div class="flex items-center gap-2">
@@ -51,7 +36,7 @@
 
     <!-- Inline Edit -->
     <div
-        class="flex-1 min-w-0 ml-3"
+        class="flex-1 min-w-0 ml-2"
         x-show="$data.inlineEditingItemId === {{.Item.ID}}"
         x-cloak
     >
@@ -168,5 +153,20 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
         </svg>
     </button>
+
+    <!-- Drag Handle - keep visible but transparent during edit to maintain spacing -->
+    <div 
+        class="drag-handle flex-shrink-0 w-8 h-10 flex items-center justify-center -mr-2 touch-none cursor-grab active:cursor-grabbing text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-400 transition-colors"
+        :class="$data.inlineEditingItemId === {{.Item.ID}} && 'opacity-0 pointer-events-none'"
+    >
+        <svg class="w-5 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="9" cy="5" r="2"/>
+            <circle cx="15" cy="5" r="2"/>
+            <circle cx="9" cy="12" r="2"/>
+            <circle cx="15" cy="12" r="2"/>
+            <circle cx="9" cy="19" r="2"/>
+            <circle cx="15" cy="19" r="2"/>
+        </svg>
+    </div>
 </div>
 {{end}}

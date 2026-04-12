@@ -1,5 +1,5 @@
 {{define "list"}}
-<div x-data="shoppingList()" x-init="init()" @refresh-list.window="refreshList()" class="min-h-screen pb-28 md:pb-8 bg-stone-50 dark:bg-stone-900 transition-colors" data-list-id="{{.List.ID}}" data-show-completed="{{.ShowCompleted}}">
+<div x-data="shoppingList()" x-init="init()" @refresh-list.window="refreshList()" class="min-h-screen mobile-bottom-padding bg-stone-50 dark:bg-stone-900 transition-colors" data-list-id="{{.List.ID}}" data-show-completed="{{.ShowCompleted}}">
     <!-- Hidden input for iOS keyboard trick -->
     <input type="text" id="ios-keyboard-trigger" class="absolute opacity-0 pointer-events-none" style="position: absolute; top: -9999px; left: -9999px;" tabindex="-1" aria-hidden="true">
     <!-- Header -->
@@ -281,8 +281,22 @@
 
             <!-- Actions -->
             <div class="flex items-center gap-2">
+                <!-- Cancel inline edit (mobile only) -->
+                <button
+                    x-show="inlineEditingItemId !== null"
+                    x-cloak
+                    @click="cancelInlineEdit()"
+                    class="w-10 h-10 rounded-xl flex items-center justify-center transition-colors bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-600"
+                    :title="t('common.cancel')"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+
                 <!-- Manage sections -->
                 <button
+                    x-show="inlineEditingItemId === null"
                     @click="isOnline ? showManageSections = true : window.Toast.show(t('offline.action_blocked'), 'warning')"
                     class="w-10 h-10 rounded-xl flex items-center justify-center transition-colors"
                     :class="isOnline ? 'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-600' : 'bg-stone-50 dark:bg-stone-800 text-stone-300 dark:text-stone-600'"
@@ -294,6 +308,7 @@
 
                 <!-- Add product FAB -->
                 <button
+                    x-show="inlineEditingItemId === null"
                     id="mobile-add-item-btn"
                     @click="showAddItem = true"
                     class="w-12 h-12 bg-pink-400 hover:bg-pink-500 text-white rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-transform"

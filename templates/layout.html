@@ -141,6 +141,18 @@
         .htmx-request .htmx-indicator { display: inline-block; }
         .htmx-indicator { display: none; }
 
+        /* Mobile bottom padding to prevent scroll jump when keyboard appears */
+        @media (max-width: 768px) {
+            .mobile-bottom-padding {
+                padding-bottom: 50vh;
+            }
+        }
+        @media (min-width: 769px) {
+            .mobile-bottom-padding {
+                padding-bottom: 2rem;
+            }
+        }
+
         /* HTMX animations */
         .htmx-added {
             animation: slideIn 0.25s ease-out;
@@ -344,7 +356,6 @@
             opacity: 0 !important;
         }
         body.is-dragging {
-            overflow: hidden;
             touch-action: none;
             cursor: grabbing !important;
         }

@@ -2552,12 +2552,18 @@ function shoppingList() {
                                 await this.$nextTick();
                                 await this.$nextTick();
                                 
-                                // Focus the input with a small delay for DOM rendering
+                                // Scroll the new item into view, then focus
                                 setTimeout(() => {
                                     const input = document.querySelector(`#item-${newItemId} input[x-model="$data.inlineEditName"]`);
                                     if (input) {
-                                        input.focus();
-                                        input.select();
+                                        // Scroll the new item into view with smooth animation
+                                        newItemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        
+                                        // Focus after scrolling starts
+                                        setTimeout(() => {
+                                            input.focus();
+                                            input.select();
+                                        }, 100);
                                     }
                                 }, 50);
                             }
@@ -3716,8 +3722,9 @@ window.getCompletedSectionState = function(sectionId) {
     let isRefreshing = false;
 
     function canPull() {
-        // Only pull when at top of page and no modal is open
+        // Only pull when at top of page, no modal is open, and not dragging
         return window.scrollY === 0 &&
+               !document.body.classList.contains('is-dragging') &&
                !document.querySelector('[x-show="showAddItem"]:not([style*="display: none"])') &&
                !document.querySelector('[x-show="showManageSections"]:not([style*="display: none"])') &&
                !document.querySelector('[x-show="showSettings"]:not([style*="display: none"])');
