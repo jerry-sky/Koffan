@@ -1,3 +1,6 @@
+# Air (live reload)
+tmp/
+
 # Binaries
 shopping-list
 *.exe

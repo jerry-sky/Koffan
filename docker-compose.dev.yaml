@@ -1,0 +1,19 @@
+services:
+  shopping-list:
+    build:
+      context: .
+      dockerfile: dev/Dockerfile
+    working_dir: /app
+    ports:
+      - "4201:80"
+    environment:
+      APP_ENV: dev
+      APP_PASSWORD: ${APP_PASSWORD:-shopping123}
+      PORT: "80"
+      DB_PATH: /data/shopping.db
+    volumes:
+      - .:/app
+      - shopping-data:/data
+
+volumes:
+  shopping-data:
