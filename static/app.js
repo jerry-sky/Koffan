@@ -253,6 +253,8 @@ function shoppingList() {
 
         // Current item for mobile actions (sheet). History: pushState on open so Android back closes sheet.
         mobileActionItem: null,
+        /** True only after we called pushState for the current sheet (mobile viewport). */
+        _mobileSheetHistoryActive: false,
 
         // Edit item
         editingItem: null,
@@ -332,6 +334,7 @@ function shoppingList() {
                 if (this.mobileActionItem) {
                     this.mobileActionItem = null;
                 }
+                this._mobileSheetHistoryActive = false;
             };
             window.addEventListener('popstate', this._popStateMobileAction);
 
@@ -1413,6 +1416,7 @@ function shoppingList() {
 
         // Mobile Action Modal
         openMobileAction(item) {
+            const hadOpenSheet = !!this.mobileActionItem;
             this.mobileActionItem = {
                 id: item.id,
                 name: item.name,
@@ -1421,14 +1425,25 @@ function shoppingList() {
                 uncertain: item.uncertain,
                 quantity: item.quantity || 0
             };
+            // One history entry per open session only (avoid double push on repeat events / switching item).
+            if (hadOpenSheet) {
+                return;
+            }
+            // Sheet is md:hidden; never push when the UI cannot show (prevents orphan history entries).
+            if (typeof window.matchMedia === 'function' && !window.matchMedia('(max-width: 767px)').matches) {
+                return;
+            }
             history.pushState({ koffanMobileItemAction: true }, '');
+            this._mobileSheetHistoryActive = true;
         },
 
         dismissMobileActionSheet() {
             if (!this.mobileActionItem) return;
-            if (window.history.state && window.history.state.koffanMobileItemAction) {
+            if (this._mobileSheetHistoryActive && window.history.state && window.history.state.koffanMobileItemAction) {
                 window.history.back();
+                // popstate clears mobileActionItem and _mobileSheetHistoryActive
             } else {
+                this._mobileSheetHistoryActive = false;
                 this.mobileActionItem = null;
             }
         },
