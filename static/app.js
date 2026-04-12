@@ -262,6 +262,11 @@ function shoppingList() {
         editItemDescription: '',
         editItemQuantity: 0,
 
+        // Inline edit
+        inlineEditingItemId: null,
+        inlineEditName: '',
+        inlineEditSectionId: null,
+
         // Auto-completion
         suggestions: [],
         showSuggestions: false,
@@ -2364,6 +2369,207 @@ function shoppingList() {
                 });
             }
         },
+
+        // Inline edit functions
+        _inlineEditBlurScheduled: false,
+
+        startInlineEdit(itemId, sectionId, name, description, quantity) {
+            this.inlineEditingItemId = itemId;
+            this.inlineEditName = name;
+            this.inlineEditSectionId = sectionId;
+            this._inlineEditBlurScheduled = false;
+
+            this.$nextTick(() => {
+                const input = document.querySelector(`#item-${itemId} input[x-model="$data.inlineEditName"]`);
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            });
+        },
+
+        async handleInlineEditEnter(itemId, sectionId) {
+            // Prevent blur from firing after this
+            this._inlineEditBlurScheduled = true;
+
+            if (this.inlineEditingItemId !== itemId) {
+                return;
+            }
+
+            const newName = this.inlineEditName.trim();
+            
+            if (!newName) {
+                this.cancelInlineEdit();
+                return;
+            }
+
+            // Save the current item
+            await this.saveInlineEditInternal(itemId, sectionId);
+
+            // Create new item right below this one
+            await this.createItemAfterAndEdit(itemId, sectionId);
+        },
+
+        async handleInlineEditBlur(itemId, sectionId) {
+            // If blur was scheduled to be skipped (Enter was pressed), skip it
+            if (this._inlineEditBlurScheduled) {
+                this._inlineEditBlurScheduled = false;
+                return;
+            }
+
+            if (this.inlineEditingItemId !== itemId) {
+                return;
+            }
+
+            const newName = this.inlineEditName.trim();
+            const itemEl = document.getElementById(`item-${itemId}`);
+            
+            if (!newName) {
+                // If this is a placeholder item that was left empty, delete it
+                if (itemEl && itemEl.getAttribute('data-placeholder-item') === 'true') {
+                    this.cancelInlineEdit();
+                    await this.deleteItemDirect(itemId, sectionId);
+                    return;
+                }
+                this.cancelInlineEdit();
+                return;
+            }
+
+            // Just save, don't create new item
+            await this.saveInlineEditInternal(itemId, sectionId);
+            
+            // Remove placeholder marker after successful save
+            if (itemEl) {
+                itemEl.removeAttribute('data-placeholder-item');
+            }
+        },
+
+        async saveInlineEditInternal(itemId, sectionId) {
+            const newName = this.inlineEditName.trim();
+            const itemEl = document.getElementById(`item-${itemId}`);
+            
+            if (!newName || !itemEl) {
+                await this.cancelInlineEdit();
+                return;
+            }
+
+            const body = `name=${encodeURIComponent(newName)}`;
+            const wasPlaceholder = itemEl.getAttribute('data-placeholder-item') === 'true';
+            
+            this.inlineEditingItemId = null;
+            this.inlineEditName = '';
+
+            this.markLocalAction('item_updated');
+
+            try {
+                const response = await this.offlineFetch(
+                    `/items/${itemId}`,
+                    {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: body
+                    },
+                    'edit_item'
+                );
+
+                if (response.ok) {
+                    const html = await response.text();
+                    if (itemEl && html) {
+                        Alpine.destroyTree(itemEl);
+                        itemEl.outerHTML = html.trim();
+                        
+                        // If it was a placeholder, ensure the marker is removed from new element
+                        if (wasPlaceholder) {
+                            const newItemEl = document.getElementById(`item-${itemId}`);
+                            if (newItemEl) {
+                                newItemEl.removeAttribute('data-placeholder-item');
+                            }
+                        }
+                    }
+                    this.refreshStats();
+                }
+            } catch (error) {
+                console.error('Failed to save inline edit:', error);
+            }
+        },
+
+        async cancelInlineEdit() {
+            const itemId = this.inlineEditingItemId;
+            const sectionId = this.inlineEditSectionId;
+            
+            this.inlineEditingItemId = null;
+            this.inlineEditName = '';
+            this.inlineEditSectionId = null;
+            this._inlineEditBlurScheduled = false;
+            
+            // If this is a placeholder item, delete it
+            if (itemId && sectionId) {
+                const itemEl = document.getElementById(`item-${itemId}`);
+                if (itemEl && itemEl.getAttribute('data-placeholder-item') === 'true') {
+                    await this.deleteItemDirect(itemId, sectionId);
+                }
+            }
+        },
+
+        async createItemAfterAndEdit(afterItemId, sectionId) {
+            this.markLocalAction('item_created');
+
+            try {
+                // Create item with single space as name (minimal placeholder)
+                const response = await this.offlineFetch(
+                    '/items',
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `section_id=${sectionId}&name=${encodeURIComponent(' ')}&description=`
+                    },
+                    'create_item'
+                );
+
+                if (response.ok) {
+                    const html = await response.text();
+                    if (html) {
+                        const afterItemEl = document.getElementById(`item-${afterItemId}`);
+                        if (afterItemEl) {
+                            // Insert new item HTML right after the current item
+                            afterItemEl.insertAdjacentHTML('afterend', html.trim());
+                            
+                            // Find the new item element
+                            const newItemEl = afterItemEl.nextElementSibling;
+                            if (newItemEl && newItemEl.id && newItemEl.id.startsWith('item-')) {
+                                const newItemId = parseInt(newItemEl.id.replace('item-', ''));
+                                
+                                // Mark this item as a placeholder that should be deleted if left empty
+                                newItemEl.setAttribute('data-placeholder-item', 'true');
+                                
+                                // Set inline edit state directly
+                                this.inlineEditingItemId = newItemId;
+                                this.inlineEditName = '';
+                                this.inlineEditSectionId = sectionId;
+                                this._inlineEditBlurScheduled = false;
+                                
+                                // Wait for Alpine to process x-show directives
+                                await this.$nextTick();
+                                await this.$nextTick();
+                                
+                                // Focus the input with a small delay for DOM rendering
+                                setTimeout(() => {
+                                    const input = document.querySelector(`#item-${newItemId} input[x-model="$data.inlineEditName"]`);
+                                    if (input) {
+                                        input.focus();
+                                        input.select();
+                                    }
+                                }, 50);
+                            }
+                        }
+                    }
+                    this.refreshStats();
+                }
+            } catch (error) {
+                console.error('Failed to create new item:', error);
+            }
+        },
+
 
 
         // Quick add inline - opens inline input in section
