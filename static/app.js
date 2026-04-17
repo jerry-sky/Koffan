@@ -2373,6 +2373,17 @@ function shoppingList() {
         // Inline edit functions
         _inlineEditBlurScheduled: false,
 
+        resizeInlineEditTextarea(itemId) {
+            const textarea = document.querySelector(`#item-${itemId} textarea[x-model="$data.inlineEditName"]`);
+            if (!textarea) {
+                return null;
+            }
+
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+            return textarea;
+        },
+
         startInlineEdit(itemId, sectionId, name, description, quantity) {
             this.inlineEditingItemId = itemId;
             this.inlineEditName = name;
@@ -2380,10 +2391,10 @@ function shoppingList() {
             this._inlineEditBlurScheduled = false;
 
             this.$nextTick(() => {
-                const input = document.querySelector(`#item-${itemId} input[x-model="$data.inlineEditName"]`);
-                if (input) {
-                    input.focus();
-                    input.select();
+                const textarea = this.resizeInlineEditTextarea(itemId);
+                if (textarea) {
+                    textarea.focus();
+                    textarea.select();
                 }
             });
         },
@@ -2554,15 +2565,15 @@ function shoppingList() {
                                 
                                 // Scroll the new item into view, then focus
                                 setTimeout(() => {
-                                    const input = document.querySelector(`#item-${newItemId} input[x-model="$data.inlineEditName"]`);
-                                    if (input) {
+                                    const textarea = this.resizeInlineEditTextarea(newItemId);
+                                    if (textarea) {
                                         // Scroll the new item into view with smooth animation
                                         newItemEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                         
                                         // Focus after scrolling starts
                                         setTimeout(() => {
-                                            input.focus();
-                                            input.select();
+                                            textarea.focus();
+                                            textarea.select();
                                         }, 100);
                                     }
                                 }, 50);

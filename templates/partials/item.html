@@ -5,7 +5,7 @@
     data-section-id="{{.Item.SectionID}}"
     class="px-4 py-3 flex items-center gap-0.5 hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors group select-none {{if .Item.Uncertain}}bg-amber-50/50 dark:bg-amber-900/30{{end}}"
     x-show="isItemVisible({{.Item.ID}})"
-    @click="if($data.inlineEditingItemId !== {{.Item.ID}} && !$event.target.closest('button, a, input, select')) { $data.startInlineEdit({{.Item.ID}}, {{.Item.SectionID}}, '{{.Item.Name | js}}', '{{.Item.Description | js}}', {{.Item.Quantity}}) }"
+    @click="if($data.inlineEditingItemId !== {{.Item.ID}} && !$event.target.closest('button, a, input, select, textarea')) { $data.startInlineEdit({{.Item.ID}}, {{.Item.SectionID}}, '{{.Item.Name | js}}', '{{.Item.Description | js}}', {{.Item.Quantity}}) }"
 >
     <!-- Checkbox -->
     <button
@@ -24,7 +24,7 @@
             {{if .Item.Uncertain}}
             <span class="text-amber-500 dark:text-amber-400 text-xs">?</span>
             {{end}}
-            <p class="item-name text-sm text-stone-700 dark:text-stone-200 truncate">{{.Item.Name}}</p>
+            <p class="item-name flex-1 min-w-0 text-sm text-stone-700 dark:text-stone-200 whitespace-pre-wrap break-words">{{.Item.Name}}</p>
             {{if gt .Item.Quantity 0}}
             <span class="px-1.5 py-0.5 text-xs font-medium bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-full flex-shrink-0">{{.Item.Quantity}}x</span>
             {{end}}
@@ -40,15 +40,17 @@
         x-show="$data.inlineEditingItemId === {{.Item.ID}}"
         x-cloak
     >
-        <input
-            type="text"
+        <textarea
             x-model="$data.inlineEditName"
             @keydown.enter.prevent="$data.handleInlineEditEnter({{.Item.ID}}, {{.Item.SectionID}})"
             @keydown.escape="$data.cancelInlineEdit()"
+            @input="$el.style.height = 'auto'; $el.style.height = `${$el.scrollHeight}px`"
+            @focus="$el.style.height = 'auto'; $el.style.height = `${$el.scrollHeight}px`"
             @blur="$data.handleInlineEditBlur({{.Item.ID}}, {{.Item.SectionID}})"
-            class="w-full px-2 py-1 text-sm text-stone-700 dark:text-stone-200 bg-white dark:bg-stone-800 border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-400"
+            rows="1"
+            class="w-full px-2 py-1 text-sm text-stone-700 dark:text-stone-200 bg-white dark:bg-stone-800 border border-pink-400 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 resize-none overflow-hidden"
             :placeholder="t('items.name')"
-        />
+        ></textarea>
     </div>
 
     <!-- Desktop Actions -->
